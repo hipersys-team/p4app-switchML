@@ -4,3 +4,7 @@ docs/client_lib_api
 docs/readmes
 __pycache__
 dev_root/controller/switchml_pb2*
+dev_root/client_lib/src/switchml.pb.h
+dev_root/client_lib/src/switchml.pb.cc
+dev_root/client_lib/src/switchml.grpc.pb.h
+dev_root/client_lib/src/switchml.grpc.pb.cc

@@ -10,7 +10,7 @@ channels:
 dependencies:
   - defaults::boost-cpp=1.65
   - cmake 
-  - cudatoolkit-dev=10.1
+  - cudatoolkit-dev=11.1
   - cudnn
   - magma-cuda101
   - mkl
