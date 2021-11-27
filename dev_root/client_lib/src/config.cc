@@ -74,7 +74,7 @@ bool Config::LoadFromFile(std::string path) {
 
 #ifdef DPDK
     po::options_description dpdk_options("backend.dpdk");
-    dpdk_options.add_options()
+    // dpdk_options.add_options()
         ("backend.dpdk.worker_port", po::value<uint16_t>(&this->backend_.dpdk.worker_port)->default_value(4000))
         ("backend.dpdk.worker_ip", po::value<std::string>(&this->backend_.dpdk.worker_ip_str)->default_value("10.0.0.1"))
         ("backend.dpdk.cores", po::value<std::string>(&this->backend_.dpdk.cores_str)->default_value("0-3"))
@@ -96,6 +96,7 @@ bool Config::LoadFromFile(std::string path) {
         ("backend.rdma.device_name", po::value<std::string>(&this->backend_.rdma.device_name)->default_value("mlx5_0"))
         ("backend.rdma.device_port_id", po::value<uint16_t>(&this->backend_.rdma.device_port_id)->default_value(1))
         ("backend.rdma.gid_index", po::value<uint16_t>(&this->backend_.rdma.gid_index)->default_value(3))
+        ("backend.rdma.straggler_min", po::value<uint32_t>(&this->backend_.rdma.straggler_min)->default_value(50))
     ;
     config_file_options.add(rdma_options);
 #endif
