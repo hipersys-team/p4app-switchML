@@ -222,6 +222,8 @@ header switchml_md_h {
     // First/last packet of a message
     bool first_packet;
     bool last_packet;
+
+    // bool skip_straggler;
 }
 
 // Bridged metadata header for RDMA

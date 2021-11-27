@@ -131,6 +131,10 @@ control Ingress(
 
                 // Detect when we have received all the packets for a slot
                 workers_counter.apply(hdr, ig_md, ig_dprsr_md);
+                // if (ig_md.switchml_md.first_last_flag != 0 && ig_md_switchml_md.first_last_flag != 1 && ig_md.switchml_md.num_workers > 1) {
+                //     // Adjust first last flag to account for partial agg. if needed
+                    
+                // }
             }
 
             // If it's a SwitchML packet, process it

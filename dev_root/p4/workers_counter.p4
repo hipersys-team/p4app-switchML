@@ -41,6 +41,10 @@ control WorkersCounter(
     RegisterAction<num_workers_pair_t, pool_index_t, num_workers_t>(workers_count) read_workers_count_action = {
         void apply(inout num_workers_pair_t value, out num_workers_t read_value) {
             read_value = value.first;
+
+            if (value.first == 2) {
+                value.first = 1;
+            }
         }
     };
 
