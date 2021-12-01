@@ -221,6 +221,9 @@ struct RdmaBackendConfig {
      * 2: RoCEv1 with IP-based GID, 3: RoCEv2 with IP-based GID
      */
     uint16_t gid_index;
+
+    uint32_t straggler_min;
+    uint32_t straggler_max;
 };
 #endif
 

@@ -153,6 +153,13 @@ void RdmaWorkerThread::operator()() {
             continue;
         }
 
+        // Inject straggler time here
+        if (this->config_.backend_.rdma.straggler_min > 0) {
+            std::chrono::milliseconds timespan(this->config_.backend_.rdma.straggler_min);
+            std::this_thread::sleep_for(timespan);
+        }
+
+
         // Compute number of messages needed for this job
         uint64_t total_num_msgs = this->ppp_->SetupJobSlice(&job_slice);
 

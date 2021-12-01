@@ -12,7 +12,7 @@
 
 # A unique identifier for a worker node. Like MPI ranks.
 # Create a different configuration file for each worker node with this rank changed.
-rank = 0
+rank = 2
 
 # The number of worker nodes in the system
 num_workers = 4

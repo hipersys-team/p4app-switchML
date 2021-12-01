@@ -24,6 +24,7 @@
 #define SWITCHML_RDMA_WORKER_THREAD_H_
 
 #include <thread>
+#include <chrono>
 
 #include "common.h"
 #include "context.h"
