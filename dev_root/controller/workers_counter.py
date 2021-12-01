@@ -39,3 +39,52 @@ class WorkersCounter(Control):
     def _clear(self):
         ''' Clear only workers count register '''
         self.register.entry_del(self.target)
+    
+    def get_count(self, start=0, count=None):
+        ''' Get the current bitmap values.
+            The parameters can limit the number of returned indices to
+            [start, start + count]. The default is [0, 8].
+        '''
+
+        if count == None:
+            count = 8
+
+        try:
+            resp = self.register.entry_get(self.target, [
+                self.register.make_key([self.gc.KeyTuple('$REGISTER_INDEX', i)])
+                for i in range(start, start + count)
+            ],
+                                           flags={'from_hw': True})
+
+            values = []
+            for v, k in resp:
+                v = v.to_dict()
+                k = k.to_dict()
+
+                set0 = v[
+                    'Ingress.workers_counter.workers_count.first']
+                set1 = v[
+                    'Ingress.workers_counter.workers_count.second']
+
+                # Separate values for each pipe
+                for pipe, (s0, s1) in enumerate(zip(set0, set1)):
+                    entry_set0 = {
+                        'index': k['$REGISTER_INDEX']['value'],
+                        'set': 0,
+                        'pipe': pipe,
+                        'bitmap': s0
+                    }
+                    entry_set1 = {
+                        'index': k['$REGISTER_INDEX']['value'],
+                        'set': 1,
+                        'pipe': pipe,
+                        'bitmap': s1
+                    }
+                    values.extend([entry_set0, entry_set1])
+
+        except BfruntimeRpcException as bfrte:
+            # Indices out of bound
+            self.log.debug(str(bfrte))
+            return []
+
+        return values

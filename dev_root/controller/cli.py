@@ -525,7 +525,7 @@ class Cli(Cmd, object):
                 self.error('The arguments must be integers')
                 return
         else:
-            values = self.ctrl.bitmap_checker.get_bitmap()
+            values = self.ctrl.workers_counter.get_count()
 
         if not values:
             self.out('No elements found')
