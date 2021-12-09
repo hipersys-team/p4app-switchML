@@ -90,6 +90,19 @@ class RDMAReceiver(Control):
         self.packet_counter.entry_del(self.target)
         self.message_counter.entry_del(self.target)
         self.sequence_violation_counter.entry_del(self.target)
+    
+    def set_num_workers(self):
+        resp = self.table.entry_get(self.target, flags={'from_hw': False})
+        keys = []
+        values = []
+        for v, k in resp:
+            keys.append(k)
+            v = v.to_dict()
+            v['num_workers'] = 3
+            values.append(self.table.make_data(v))
+
+            print(k)
+            print(v)
 
     def add_rdma_worker(self, worker_id, worker_ip, session_partition_key,
                         session_packet_size, num_workers, session_mgid):
