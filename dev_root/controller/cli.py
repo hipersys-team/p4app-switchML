@@ -436,7 +436,7 @@ class Cli(Cmd, object):
             will be shown.
         '''
         self._show_workers(self.ctrl.rdma_sender, self.ctrl.rdma_receiver, line)
-        self.ctrl.rdma_receiver.set_num_workers()
+        self.ctrl.rdma_receiver.set_num_workers(3)
 
     def do_show_queue_pairs_counters(self, line):
         ''' Show the number of packets and messages received per queue pair.

@@ -49,6 +49,11 @@ class RDMAReceiver(Control):
         # Workers
         self.worker_ids = []
 
+        # Worker IP, session MGID, session packet size lookup
+        self.worker_ips = {}
+        self.worker_session_mgids = {}
+        self.worker_session_packet_sizes = {}
+
         # Clear table and counters
         self._clear()
 
@@ -91,18 +96,65 @@ class RDMAReceiver(Control):
         self.message_counter.entry_del(self.target)
         self.sequence_violation_counter.entry_del(self.target)
     
-    def set_num_workers(self):
-        resp = self.table.entry_get(self.target, flags={'from_hw': False})
-        keys = []
-        values = []
-        for v, k in resp:
-            keys.append(k)
-            v = v.to_dict()
-            v['num_workers'] = 3
-            values.append(self.table.make_data(v))
+    def set_num_workers(self, num_workers):
+        for worker_id in self.worker_ids:
+            worker_ip = self.worker_ips[worker_id]
+            worker_mask = 1 << worker_id
+            session_packet_size = self.worker_session_packet_sizes[worker_id]
+            session_mgid = self.worker_session_mgids[worker_id]
+            for opcode, action in [
+                (RDMAOpcode.UC_RDMA_WRITE_ONLY,
+                'Ingress.rdma_receiver.only_packet'),
+                (RDMAOpcode.UC_RDMA_WRITE_ONLY_IMMEDIATE,
+                'Ingress.rdma_receiver.only_packet_with_immediate'),
+                (RDMAOpcode.UC_RDMA_WRITE_FIRST,
+                'Ingress.rdma_receiver.first_packet'),
+                (RDMAOpcode.UC_RDMA_WRITE_MIDDLE,
+                'Ingress.rdma_receiver.middle_packet'),
+                (RDMAOpcode.UC_RDMA_WRITE_LAST,
+                'Ingress.rdma_receiver.last_packet'),
+                (RDMAOpcode.UC_RDMA_WRITE_LAST_IMMEDIATE,
+                'Ingress.rdma_receiver.last_packet_with_immediate')
+            ]:
 
-            print(k)
-            print(v)
+                # Switch virtual queue-pairs
+                # lower 16 bits: QP numbers for one worker
+                # upper 8 bits: worker ID
+                # most significant bit set to 1 to help debugging
+                qpn_top_bits = 0x800000 | ((worker_id & 0xff) << 16)
+
+                self.table.entry_mod(
+                    self.target,
+                    [
+                        self.table.make_key([
+                            self.gc.KeyTuple('$MATCH_PRIORITY', 10),
+                            self.gc.KeyTuple('hdr.ipv4.src_addr', worker_ip),
+                            self.gc.KeyTuple('hdr.ipv4.dst_addr', self.switch_ip),
+                            self.gc.KeyTuple('hdr.ib_bth.partition_key',
+                                            session_partition_key),
+                            self.gc.KeyTuple('hdr.ib_bth.opcode', opcode),
+                            # match on top bits of QP to support multiple clients
+                            # on the same machine (same IP, different worker ID)
+                            self.gc.KeyTuple('hdr.ib_bth.dst_qp', qpn_top_bits,
+                                            0xff0000)
+                        ])
+                    ],
+                    [
+                        self.table.make_data(
+                            [
+                                self.gc.DataTuple('mgid', session_mgid),
+                                self.gc.DataTuple('worker_type', WorkerType.ROCEv2),
+                                self.gc.DataTuple('worker_id', worker_id),
+                                self.gc.DataTuple('num_workers', num_workers),
+                                self.gc.DataTuple('worker_bitmap', worker_mask),
+                                self.gc.DataTuple('packet_size',
+                                                session_packet_size),
+                                # Clear direct counter
+                                self.gc.DataTuple('$COUNTER_SPEC_BYTES', 0),
+                                self.gc.DataTuple('$COUNTER_SPEC_PKTS', 0)
+                            ],
+                            action)
+                    ])
 
     def add_rdma_worker(self, worker_id, worker_ip, session_partition_key,
                         session_packet_size, num_workers, session_mgid):
@@ -184,6 +236,9 @@ class RDMAReceiver(Control):
 
         # Save worker id
         self.worker_ids.append(worker_id)
+        self.worker_ips[worker_id] = worker_ip
+        self.worker_session_mgids[worker_id] = session_mgid
+        self.worker_session_packet_sizes[worker_id] = session_packet_size
         return (True, None)
 
     def get_workers_counter(self, worker_id=None):
