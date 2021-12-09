@@ -49,10 +49,12 @@ class RDMAReceiver(Control):
         # Workers
         self.worker_ids = []
 
-        # Worker IP, session MGID, session packet size lookup
+        # Worker IP, session MGID, session packet size, session partition key lookup
         self.worker_ips = {}
         self.worker_session_mgids = {}
         self.worker_session_packet_sizes = {}
+        self.worker_session_partition_keys = {}
+
 
         # Clear table and counters
         self._clear()
@@ -102,6 +104,7 @@ class RDMAReceiver(Control):
             worker_mask = 1 << worker_id
             session_packet_size = self.worker_session_packet_sizes[worker_id]
             session_mgid = self.worker_session_mgids[worker_id]
+            session_partition_key = self.worker_session_partition_keys[worker_id]
             for opcode, action in [
                 (RDMAOpcode.UC_RDMA_WRITE_ONLY,
                 'Ingress.rdma_receiver.only_packet'),
@@ -239,6 +242,7 @@ class RDMAReceiver(Control):
         self.worker_ips[worker_id] = worker_ip
         self.worker_session_mgids[worker_id] = session_mgid
         self.worker_session_packet_sizes[worker_id] = session_packet_size
+        self.worker_session_partition_keys[worker_id] = session_partition_key
         return (True, None)
 
     def get_workers_counter(self, worker_id=None):
